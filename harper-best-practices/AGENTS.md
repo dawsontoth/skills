@@ -25,8 +25,9 @@ Guidelines for building scalable, secure, and performant applications on Harper.
    - 3.5 [Caching](#35-caching)
 4. [Infrastructure & Ops](#4-infrastructure--ops) — **MEDIUM**
    - 4.1 [Creating Harper Applications](#41-creating-harper-applications)
-   - 4.2 [Deploying to Harper Fabric](#42-deploying-to-harper-fabric)
-   - 4.3 [Serving Web Content](#43-serving-web-content)
+   - 4.2 [Creating a Fabric Account and Cluster](#42-creating-a-fabric-account-and-cluster)
+   - 4.3 [Deploying to Harper Fabric](#43-deploying-to-harper-fabric)
+   - 4.4 [Serving Web Content](#44-serving-web-content)
 
 ---
 
@@ -266,7 +267,25 @@ pnpm create harper@latest
 bun create harper@latest
 ```
 
-### 4.2 Deploying to Harper Fabric
+### 4.2 Creating a Fabric Account and Cluster
+
+Follow these steps to set up your Harper Fabric environment for deployment.
+
+#### Steps
+
+1. **Sign Up/In**: Go to [https://fabric.harper.fast/](https://fabric.harper.fast/) and sign up or sign in.
+2. **Create an Organization**: Create an organization (org) to manage your projects.
+3. **Create a Cluster**: Create a new cluster. This can be on the free tier, no credit card required.
+4. **Set Credentials**: During setup, set the cluster username and password to finish configuring it.
+5. **Get Application URL**: Navigate to the **Config** tab and copy the **Application URL**.
+6. **Configure Environment**: Update your `.env` file or GitHub Actions secrets with these cluster-specific credentials:
+   ```bash
+   CLI_TARGET_USERNAME='YOUR_CLUSTER_USERNAME'
+   CLI_TARGET_PASSWORD='YOUR_CLUSTER_PASSWORD'
+   CLI_TARGET='YOUR_CLUSTER_URL'
+   ```
+
+### 4.3 Deploying to Harper Fabric
 
 Globally scaling your Harper application.
 
@@ -275,7 +294,88 @@ Globally scaling your Harper application.
 - **Automatic Sync**: Data is synced across the fabric automatically.
 - **Free Tier**: Start for free and scale as you grow.
 
-### 4.3 Serving Web Content
+#### Steps
+1. **Sign up**: Follow the [Creating a Fabric Account and Cluster](#42-creating-a-fabric-account-and-cluster) steps to create a Harper Fabric account, organization, and cluster.
+2. **Configure Environment**: Add your cluster credentials and cluster application URL to `.env`:
+   ```bash
+   CLI_TARGET_USERNAME='YOUR_CLUSTER_USERNAME'
+   CLI_TARGET_PASSWORD='YOUR_CLUSTER_PASSWORD'
+   CLI_TARGET='YOUR_CLUSTER_URL'
+   ```
+3. **Deploy From Local Environment**: Run `npm run deploy`.
+4. **Set up CI/CD**: Configure `.github/workflows/deploy.yaml` and set repository secrets for automated deployments.
+
+#### Manual Setup for Existing Apps
+
+If your application was not created with `npm create harper`, you'll need to manually configure the deployment scripts and CI/CD workflow.
+
+##### 1. Update `package.json`
+
+Add the following scripts and dependencies to your `package.json`:
+
+```json
+{
+  "scripts": {
+    "deploy": "dotenv -- npm run deploy:component",
+    "deploy:component": "harperdb deploy_component . restart=rolling replicated=true"
+  },
+  "devDependencies": {
+    "dotenv-cli": "^11.0.0",
+    "harperdb": "^4.7.20"
+  }
+}
+```
+
+###### Why split the scripts?
+
+The `deploy` script is separated from `deploy:component` to ensure environment variables from your `.env` file are properly loaded and passed to the Harper CLI. 
+
+- `deploy`: Uses `dotenv-cli` to load environment variables (like `CLI_TARGET`, `CLI_TARGET_USERNAME`, and `CLI_TARGET_PASSWORD`) before executing the next command.
+- `deploy:component`: The actual command that performs the deployment. 
+
+By using `dotenv -- npm run deploy:component`, the environment variables are correctly set in the shell session before `harperdb deploy_component` is called, allowing it to authenticate with your cluster.
+
+##### 2. Configure GitHub Actions
+
+Create a `.github/workflows/deploy.yaml` file with the following content:
+
+```yaml
+name: Deploy to Harper Fabric
+on:
+  workflow_dispatch:
+#  push:
+#    branches:
+#      - main
+concurrency:
+  group: main
+  cancel-in-progress: false
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          cache: 'npm'
+          node-version: '20'
+      - name: Install dependencies
+        run: npm ci
+      - name: Run unit tests
+        run: npm test
+      - name: Run lint
+        run: npm run lint
+      - name: Deploy
+        run: npm run deploy
+```
+
+Be sure to set the following repository secrets in your GitHub repository:
+- `CLI_TARGET`
+- `CLI_TARGET_USERNAME`
+- `CLI_TARGET_PASSWORD`
+
+### 4.4 Serving Web Content
 
 Two ways to serve web content from a Harper application.
 

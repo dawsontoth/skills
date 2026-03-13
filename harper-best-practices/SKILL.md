@@ -72,6 +72,7 @@ Reference these guidelines when:
 ### 4. Infrastructure & Ops (MEDIUM)
 
 - `deploying-to-harper-fabric` - Scale globally with Harper Fabric
+- `creating-a-fabric-account-and-cluster` - Setting up your Harper Fabric cloud infrastructure
 - `creating-harper-apps` - Quickstart with `npm create harper@latest`
 - `serving-web-content` - Ways to serve web content from Harper
 
