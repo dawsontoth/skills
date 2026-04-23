@@ -12,6 +12,17 @@ npx skills add harperfast/skills
 
 Re-run this command later if you want to get the latest updates from us.
 
+### Manual Installation
+
+If your corporate network prevents the `skills` CLI from downloading the skills, you can install them manually:
+
+1.  Download the repository as a ZIP file from [GitHub](https://github.com/HarperFast/skills) (Code > Download ZIP).
+2.  Extract the contents of the ZIP file.
+3.  Copy the skill folders (e.g., `harper-best-practices`) into your project's agent configuration directory:
+    *   **Junie, Cursor, Windsurf:** `.agent/skills`
+    *   **Claude Desktop:** `.claude/skills`
+    *   **Other Agents:** Refer to your agent's documentation for its skills/rules directory.
+
 ## Available Skills
 
 ### [Harper Best Practices](harper-best-practices/SKILL.md)
